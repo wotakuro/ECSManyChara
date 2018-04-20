@@ -8,8 +8,7 @@ public class DebugUI : MonoBehaviour
 {
     private static DebugUI instance;
 
-    public Text misakiNumText;
-    public Text yukoNumText;
+    public Text charaNumText;
     public Text fpsText;
     int fpsCount;
     float fpsSum;
@@ -41,38 +40,19 @@ public class DebugUI : MonoBehaviour
         }
     }
 
-    private static void SetMisakiNum(int num)
+    public static void SetCharaNum(int num)
     {
         if (instance != null )
         {
-            instance.UpdateMisakiNum(instance.misakiNumText, "Misaki:", num);
-        }
-    }
-    private static void SetYukoNum(int num)
-    {
-        if (instance != null)
-        {
-            instance.UpdateMisakiNum(instance.yukoNumText, "Yuko:", num);
+            instance.UpdateCharanum(instance.charaNumText, "Chara:", num);
         }
     }
 
-    void UpdateMisakiNum(Text txt,string head,int num)
+    void UpdateCharanum(Text txt, string head, int num)
     {
         if (txt == null) { return; }
         sb.Length = 0;
         sb.Append(head).Append(num);
         txt.text = sb.ToString();
-    }
-
-    public static void SetCounter(AppAnimationInfo info, int num)
-    {
-        if (info.sprites[0].name.StartsWith("Misaki"))
-        {
-            SetMisakiNum(num);
-        }
-        else if (info.sprites[0].name.StartsWith("Yuko"))
-        {
-            SetYukoNum(num);
-        }
     }
 }

@@ -53,9 +53,6 @@ public class ECSEntry : MonoBehaviour
     /// </summary>
     void Start()
     {
-        // Debugger登録
-        DebugUI.SetCounter(misakiAnime, 0);
-        DebugUI.SetCounter(YukoAnime, 0);
         // animation の情報初期化
         misakiAnime.Initialize();
         YukoAnime.Initialize();
@@ -78,7 +75,7 @@ public class ECSEntry : MonoBehaviour
     }
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && charaSystem.CharaNum < 400 )
+        if (Input.GetMouseButtonDown(0) )
         {
             // Entityセット用のデータ作成
             MyTransform trans = new MyTransform();
@@ -92,14 +89,19 @@ public class ECSEntry : MonoBehaviour
                 float x = -InitPosXParam + i * 2 * InitPosXParam / clickInstance;
                 trans.position = new Vector3( x,0.5f,-InitPosZParam);
                 // キャラクターのデータセット
-                chara.time = 0.0f;
+                chara.time = Random.Range( 0.0f , 3.0f); // 少し揺れ幅を持たせます
                 chara.velocity = new Vector3(0.0f, 0.0f, 3.0f);
                 // 生成したEntitiyにデータセット
                 manager.SetComponentData(entity, trans);
                 manager.SetComponentData(entity, chara);
             }
         }
-
+        // デバッグ情報更新
+        DebugUI.SetCharaNum(charaSystem.CharaNum);
         charaSystem.Update();
+    }
+    void OnDestroy()
+    {
+        charaSystem.OnDestroy();
     }
 }

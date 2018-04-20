@@ -9,11 +9,17 @@ using UnityEngine.Rendering;
 
 namespace AppECSCode
 {
+    /// <summary>
+    /// 自前定義のTrasform 
+    /// </summary>
     public struct MyTransform : IComponentData
     {
         public UnityEngine.Vector3 position;
     }
 
+    /// <summary>
+    /// キャラクターデータ
+    /// </summary>
     public struct CharaData : IComponentData
     {
         public Vector3 velocity;
@@ -21,10 +27,12 @@ namespace AppECSCode
         public int rectIndex;
     }
 
+    /// <summary>
+    /// キャラクターを動かすためのシステム
+    /// </summary>
     [DisableAutoCreation]
     public class ECSCharaSystem : ComponentSystem
     {
-
 
         // ランニング用アニメーションの情報
         public AppAnimationInfo animationInfo;
@@ -54,12 +62,17 @@ namespace AppECSCode
         // material property
         private MaterialPropertyBlock materialBlock;
 
+        // キャラクター数
         public int CharaNum
         {
             get { return characterNum; }
         }
+        // キャラクター数
         private int characterNum = 0;
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public ECSCharaSystem() { 
             zPrepassCommandBuffer = new CommandBuffer();
             actualCommandBuffer = new CommandBuffer();
@@ -83,7 +96,9 @@ namespace AppECSCode
             materialBlock = new MaterialPropertyBlock();
         }
 
-
+        /// <summary>
+        /// Update時に行う処理です
+        /// </summary>
         protected override void OnUpdate()
         {
             var charaGroup = this.EntityManager.CreateComponentGroup(typeof(MyTransform), typeof(CharaData));
@@ -116,7 +131,7 @@ namespace AppECSCode
                 chara.rectIndex = ((int)(chara.time * 25.0f)) % animationLength + (direction * animationLength);
 
                 // 削除処理
-                if (chara.time > 8.0f)
+                if (chara.time > 10.0f)
                 {
                     deleteEntities.Add(entities[i]);
                 }
@@ -128,31 +143,49 @@ namespace AppECSCode
             // 描画処理
             zPrepassCommandBuffer.Clear();
             actualCommandBuffer.Clear();
-
             int drawNum = 0;
             for (int i = 0; i < charas.Length; ++i)
             {
-                instancedBufferForMatrics[i] = CreateMatrix(transforms[i].position, cameraPosition);
-                instancedBufferForRects[i] = animationVectorInfo[charas[i].rectIndex];
+                if (drawNum >= InstanceDrawNum)
+                {
+                    DrawCharacter(drawNum);
+                    drawNum = 0;
+                }
+                instancedBufferForMatrics[drawNum] = CreateMatrix(transforms[i].position, cameraPosition);
+                instancedBufferForRects[drawNum] = animationVectorInfo[charas[i].rectIndex];
                 ++drawNum;
             }
+            DrawCharacter(drawNum);
+
+            // 削除等の整理処理
+            charaGroup.Dispose();
+
+            // 削除リストにあったEntityの削除
+            for (int i = 0; i < deleteEntities.Length; ++i)
+            {
+                this.EntityManager.DestroyEntity(deleteEntities[i]);
+            }
+            deleteEntities.Dispose();
+        }
+
+        /// <summary>
+        /// 指定された数だけキャラを描画します
+        /// </summary>
+        /// <param name="drawNum">描画数</param>
+        private void DrawCharacter(int drawNum)
+        {
             if (drawNum > 0)
             {
                 materialBlock.SetVectorArray(ShaderNameHash.RectValue, instancedBufferForRects);
                 zPrepassCommandBuffer.DrawMeshInstanced(this.drawMesh, 0, this.drawCharaMaterial, 0, instancedBufferForMatrics, drawNum, materialBlock);
                 actualCommandBuffer.DrawMeshInstanced(this.drawMesh, 0, this.drawCharaMaterial, 1, instancedBufferForMatrics, drawNum, materialBlock);
             }
-            charaGroup.Dispose();
 
-            // 削除リストにあったEntityの削除
-            Debug.Log("deleteTntities:" + deleteEntities.Length);
-            this.EntityManager.DestroyEntity(deleteEntities);
-
-            deleteEntities.Dispose();
-
-            Debug.Log("CHaras:" + charas.Length + ":" + entities.Length );
         }
 
+        /// <summary>
+        /// 破棄時の処理
+        /// </summary>
         public void OnDestroy()
         {
             animationVectorInfo.Dispose();
