@@ -31,7 +31,6 @@ public class DebugUI : MonoBehaviour
         if (fpsSum > 0.5f)
         {
             int fps = (int)(1.0f / (fpsSum / fpsCount));
-            fps = 59;
             sb.Length = 0;
             sb.Append("fps:").Append(fps);
             fpsText.text = sb.ToString();

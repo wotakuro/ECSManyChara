@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Application/ECS/Scenes/work2_nonjob_wars.unity
+    guid: cdcba921759c2254e866e9e2b7bbddb2
   m_configObjects: {}
