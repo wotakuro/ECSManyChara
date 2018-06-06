@@ -101,7 +101,7 @@ namespace AppECSCode
         /// </summary>
         protected override void OnUpdate()
         {
-            var charaGroup = this.EntityManager.CreateComponentGroup(typeof(MyTransform), typeof(CharaData));
+            var charaGroup = this.GetComponentGroup(typeof(MyTransform), typeof(CharaData));
             var entities = charaGroup.GetEntityArray();
             var charas = charaGroup.GetComponentDataArray<CharaData>();
             var transforms = charaGroup.GetComponentDataArray<MyTransform>();
@@ -156,9 +156,7 @@ namespace AppECSCode
                 ++drawNum;
             }
             DrawCharacter(drawNum);
-
-            // 削除等の整理処理
-            charaGroup.Dispose();
+            
 
             // 削除リストにあったEntityの削除
             for (int i = 0; i < deleteEntities.Length; ++i)
