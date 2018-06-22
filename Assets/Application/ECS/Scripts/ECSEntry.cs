@@ -73,9 +73,17 @@ public class ECSEntry : MonoBehaviour
         // chara生成用のArcheTypeを作成
         charaArch = manager.CreateArchetype(typeof(MyTransform), typeof(CharaData));
     }
+
+    private bool mode = true;
+    private float time = 0.0f;
+
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) )
+        if (Input.GetMouseButtonDown(0))
+        {
+            //mode =! mode;
+        }
+        if (Input.GetMouseButtonDown(0))
         {
             // Entityセット用のデータ作成
             MyTransform trans = new MyTransform();
@@ -87,9 +95,9 @@ public class ECSEntry : MonoBehaviour
                 var entity = manager.CreateEntity(charaArch);
                 //座標セット
                 float x = -InitPosXParam + i * 2 * InitPosXParam / clickInstance;
-                trans.position = new Vector3( x,0.5f,-InitPosZParam);
+                trans.position = new Vector3(x, 0.5f, -InitPosZParam);
                 // キャラクターのデータセット
-                chara.time = Random.Range( 0.0f , 3.0f); // 少し揺れ幅を持たせます
+                chara.time = Random.Range(0.0f, 3.0f); // 少し揺れ幅を持たせます
                 chara.velocity = new Vector3(0.0f, 0.0f, 3.0f);
                 // 生成したEntitiyにデータセット
                 manager.SetComponentData(entity, trans);

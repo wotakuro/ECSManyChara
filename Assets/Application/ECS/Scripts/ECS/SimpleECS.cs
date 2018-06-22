@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿#define NON_JOB
+
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 
@@ -6,6 +8,8 @@ using Unity.Entities;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Burst;
+using UnityEngine.Jobs;
 
 namespace AppECSCode
 {
@@ -26,6 +30,34 @@ namespace AppECSCode
         public float time;
         public int rectIndex;
     }
+#if !NON_JOB
+    struct UpdateJob : Unity.Jobs.IJobParallelFor
+    {
+        public ComponentDataArray<CharaData> charas;
+        public ComponentDataArray<MyTransform> transforms;
+        public float deltaTime;
+        public int animationLength;
+        public Vector3 cameraPosition;
+
+        public void Execute(int idx)
+        {
+            MyTransform transform = transforms[idx];
+            CharaData chara = charas[idx];
+
+            //移動処理
+            transform.position += chara.velocity * deltaTime;
+            //時間の追加
+            chara.time += deltaTime;
+            //
+            Vector3 forwardFromCamera = ECSCharaSystem.GetVectorFromCamera(cameraPosition, transform.position, chara.velocity);
+            int direction = AppAnimationInfo.GetDirection(forwardFromCamera);//<-カメラと、キャラクターの向きを考慮してどの向きを向くかを決定します
+            chara.rectIndex = ((int)(chara.time * 25.0f)) % animationLength + (direction * animationLength);
+
+            transforms[idx] = transform;
+            charas[idx] = chara;
+        }
+    }
+#endif
 
     /// <summary>
     /// キャラクターを動かすためのシステム
@@ -70,6 +102,7 @@ namespace AppECSCode
         // キャラクター数
         private int characterNum = 0;
 
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -113,6 +146,7 @@ namespace AppECSCode
             Vector3 cameraPosition = Camera.main.transform.position;
 
             characterNum = charas.Length;
+#if NON_JOB
             // 更新処理
             for (int i = 0; i < charas.Length; ++i)
             {
@@ -130,14 +164,31 @@ namespace AppECSCode
                 int direction = AppAnimationInfo.GetDirection(forwardFromCamera);//<-カメラと、キャラクターの向きを考慮してどの向きを向くかを決定します
                 chara.rectIndex = ((int)(chara.time * 25.0f)) % animationLength + (direction * animationLength);
 
+                // 書き戻し
+                transforms[i] = transform;
+                charas[i] = chara;
+            }
+#else
+            UpdateJob updateJob = new UpdateJob()
+            {
+                charas = charas,
+                transforms = transforms,
+                deltaTime = deltaTime,
+                animationLength = animationLength,
+                cameraPosition = cameraPosition
+            };
+            var jobHandle = Unity.Jobs.IJobParallelForExtensions.Schedule( updateJob , charas.Length,10);
+            jobHandle.Complete();
+#endif
+
+            for (int i = 0; i < charas.Length; ++i)
+            {
+                CharaData chara = charas[i];
                 // 削除処理
                 if (chara.time > 10.0f)
                 {
                     deleteEntities.Add(entities[i]);
                 }
-                // 書き戻し
-                transforms[i] = transform;
-                charas[i] = chara;
             }
 
             // 描画処理
@@ -217,7 +268,7 @@ namespace AppECSCode
         /// <summary>
         /// カメラを考慮して向きを決定します
         /// </summary>
-        private static Vector3 GetVectorFromCamera(Vector3 cameraPos, Vector3 charaPos, Vector3 charaForward)
+        public static Vector3 GetVectorFromCamera(Vector3 cameraPos, Vector3 charaPos, Vector3 charaForward)
         {
             Vector3 diff = charaPos - cameraPos;
             Vector3 fromCameraForward = new Vector3(
