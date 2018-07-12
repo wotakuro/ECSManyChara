@@ -1,2 +1,2 @@
 # ECSManyChara
-<img src="doc/image.gif" />
+<img src="doc/manyChara.gif" />
